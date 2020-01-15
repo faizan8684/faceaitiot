@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shunya Face Registration</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Titillium+Web:400,300,600' rel='stylesheet' type='text/css'><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/tracking-min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/face-min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/trim.js') }}"></script>
+
+</head>
+<body id="body">
+        <div id="complete">
+        <div class="instruction">
+		<label>!! <span style="font-weight: bold">INSTRUCTION :</span> WORKS ON GOOGLE CHROME !!</label><br>        
+        </div>
+         <div class="form">
+      
+            <div class="tab-content">
+                    <div class="demo-frame">
+                        <div class="demo-container">
+                           <video id="video" autoplay></video>
+ 				<canvas id="canvas1"></canvas>
+                       <!-----------creating canvas to play the video------------------->
+ 
+                        </div>
+                    </div>
+         </div>
+         <div id="login">   <br>
+           <h1>Welcome To Google Dev-Fest !!</h1>
+           
+                       <div class="field-wrap">
+                         <label>Enter Your Name<span class="req">*</span>
+                         </label>
+                         <input id="pName" type="text"required autocomplete="off"/>
+                       </div>
+           
+                     <button class="button button-block" onclick="register()"/>Register</button>
+           
+ 
+              </div>
+          
+            </div><!-- tab-content -->
+       
+         </div>
+        </div>
+
+       
+	<div id="load">
+  <div>G</div>
+  <div>N</div>
+  <div>I</div>
+  <div>D</div>
+  <div>A</div>
+  <div>O</div>
+  <div>L</div>
+</div>
+
+
+<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+<script>
+
+    $(window).on('load',function () {
+        $("#load").hide();
+
+    });
+
+    var socket = io.connect('https://' + document.domain + ':' + location.port);
+    console.log("Socket: ",socket);
+    var messages = document.createElement('ul');
+
+    console.log("In register")
+    var video=document.getElementById('video');
+    var canvas = document.querySelector('canvas');
+    var context = canvas.getContext('2d');
+    vendorUrl = window.URL || window.webkitURL;
+    //photo = document.getElementById('photo');
+    navigator.getMedia = navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia;
+
+    navigator.getMedia({
+        video: true,
+        audio: false
+    }, function(stream){
+        video.srcObject=stream;
+        video.play();
+    }, function(error){
+
+    });
+    var canvas1 = document.getElementById('canvas1');
+    var context1 = canvas1.getContext('2d');
+    //canvas1.style.position="absolute";
+    //canvas.style.position="absolute";
+    //canvas1.style.left="500px";
+    //canvas1.style.top="0px";
+
+    console.log("Tracking face")
+    var tracker = new tracking.ObjectTracker('face');
+    tracker.setInitialScale(4);
+    tracker.setStepSize(2);
+    tracker.setEdgesDensity(0.1);
+
+    tracking.track('#video', tracker);
+    var img1;
+    function register() {
+
+        var i=0;
+        var person_name = document.getElementById('pName').value;
+        if(isNaN(person_name)){
+            console.log("Name: ",person_name)
+            context1.drawImage(video,0,0,canvas1.width,canvas1.height);
+            //context1.drawImage(img,rect.x+rect.width,rect.y+rect.height,rect.width+rect.x,rect.height+rect.y,100,100,100,100);
+            trimmedCanvas = trimCanvas(canvas1);
+            img1 = trimmedCanvas.toDataURL("image/jpg");
+            console.log("Imageee and name: ",img1,person_name);
+            
+	    document.getElementById("body").style.background="black";
+            $('#complete').hide();
+            $("#load").show();
+	    sendMessage(img1,person_name);
+        }
+        else{
+            alert("Invalid Name");
+            document.getElementById('pName').value = '';
+        }
+        console.log("Exiting from function");
+        return 0;
+    }
+    // Receiving message from client
+    socket.on( 'my response', function( msg ) {
+        if(msg == 0){
+
+           $("#load").hide();
+            
+            window.location.href = "/failure";
+        }
+        else if(msg == 1){
+
+            $("#load").hide();
+
+            window.location.href = "/success";
+        }
+    })
+
+    // Sending message to server
+    function sendMessage(img,name1){
+        console.log("Sending message: ",img)
+        socket.emit( 'my event', {
+            img_data : img,
+            name : name1
+        } )
+        //socket.emit(name);
+    }
+</script>
+</body>
+</html>
+
+
+
